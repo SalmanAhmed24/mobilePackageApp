@@ -1,11 +1,9 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, ScrollView, FlatList, View, TouchableOpacity, Dimensions, Image } from 'react-native';
-import { allNetworks } from '../utils/constants';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import AppLoading from 'expo-app-loading';
+import { smsOffer } from '../utils/constants';
 import * as Linking from 'expo-linking';
-// import call from 'react-native-phone-call';
-import Ussd from 'react-native-ussd';
+// fonts
 import {
 	useFonts,
 	RobotoCondensed_300Light,
@@ -15,6 +13,7 @@ import {
 	RobotoCondensed_700Bold,
 	RobotoCondensed_700Bold_Italic
 } from '@expo-google-fonts/roboto-condensed';
+
 const deviceWidth = Dimensions.get('window').width;
 const onPressHandler = (code) => {
 	let number = '';
@@ -28,38 +27,41 @@ const onPressHandler = (code) => {
 };
 const Item = ({ itemObj }) => (
 	<View style={styles.item}>
-		<View style={styles.headWrap}>
-			<Text style={styles.title}>{itemObj.name}</Text>
-		</View>
-		<View style={styles.addInfo}>
-			{itemObj.internet ? (
-				<View style={styles.infoCon}>
-					<Text style={styles.data}>Data</Text>
-					<Text style={styles.infoText}>{itemObj.internetAmount}</Text>
-				</View>
-			) : null}
-			{itemObj.minutes ? (
-				<View style={styles.infoCon}>
-					<Text style={styles.data}>Minutes</Text>
-					<Text style={styles.infoText}>{itemObj.minuteAmount} min</Text>
-				</View>
-			) : null}
-			{itemObj.otherNetworkMinFlag ? (
-				<View style={styles.infoCon}>
-					<Text style={styles.data}>Networks</Text>
-					<Text style={styles.infoText}>{itemObj.otherNetworkMin} min</Text>
-				</View>
-			) : null}
-			{itemObj.smsOpt ? (
-				<View style={styles.infoCon}>
-					<Text style={styles.data}>SMS</Text>
-					<Text style={styles.infoText}>{itemObj.smsAmount} sms</Text>
-				</View>
-			) : null}
-			<View style={styles.infoPriceCon}>
-				<Text style={styles.price}>Price</Text>
-				<Text style={styles.infoPriceText}>{itemObj.price}</Text>
+		<Text style={styles.title}>{itemObj.name}</Text>
+		<Text style={styles.type}>{itemObj.type}</Text>
+		{itemObj.internet ? (
+			<View style={styles.infoCon}>
+				<Text style={styles.data}>Data</Text>
+				<Text style={styles.infoText}>{itemObj.internetAmount}</Text>
 			</View>
+		) : null}
+		{itemObj.minutes ? (
+			<View style={styles.infoCon}>
+				<Text style={styles.data}>Minutes</Text>
+				<Text style={styles.infoText}>{itemObj.minuteAmount} min</Text>
+			</View>
+		) : null}
+		{itemObj.otherNetworkMinFlag ? (
+			<View style={styles.infoCon}>
+				<Text style={styles.data}>Other Networks</Text>
+				<Text style={styles.infoText}>{itemObj.otherNetworkMin} min</Text>
+			</View>
+		) : null}
+		{itemObj.whatsapp ? (
+			<View style={styles.infoCon}>
+				<Text style={styles.data}>WhatsApp</Text>
+				<Text style={styles.infoText}>{itemObj.whatsappAmount}</Text>
+			</View>
+		) : null}
+		{itemObj.smsOpt ? (
+			<View style={styles.infoCon}>
+				<Text style={styles.data}>SMS</Text>
+				<Text style={styles.infoText}>{itemObj.smsAmount} sms</Text>
+			</View>
+		) : null}
+		<View style={styles.infoPriceCon}>
+			<Text style={styles.price}>Price</Text>
+			<Text style={styles.infoPriceText}>{itemObj.price}</Text>
 		</View>
 		<View style={styles.subscribeBtnWrap}>
 			<TouchableOpacity style={styles.subscribe} onPress={() => onPressHandler(itemObj.code)}>
@@ -68,8 +70,15 @@ const Item = ({ itemObj }) => (
 		</View>
 	</View>
 );
-const SMSOFFerScreen = (props) => {
+
+function SMSOffer({ navigationProps }) {
 	const renderItem = ({ item }) => <Item itemObj={item} />;
+	const navigationHandler = () => {
+		navigationProps.navigation.push(`SMSOffer`, {
+			name: 'Home'
+		});
+	};
+	// functions
 	let [ fontsLoaded ] = useFonts({
 		RobotoCondensed_300Light,
 		RobotoCondensed_300Light_Italic,
@@ -78,44 +87,66 @@ const SMSOFFerScreen = (props) => {
 		RobotoCondensed_700Bold,
 		RobotoCondensed_700Bold_Italic
 	});
-	const specificNetwork = allNetworks.find((item) => item.name == 'Jazz');
 	if (!fontsLoaded) {
 		return <AppLoading />;
 	} else {
 		return (
-			<ScrollView>
-				<View style={styles.container}>
-					<Image style={styles.mainImg} source={require('../../assets/images/jazz-daily-sms.png')} />
-					<FlatList
-						style={styles.listWrap}
-						horizontal={false}
-						data={specificNetwork.smsOffers}
-						renderItem={renderItem}
-						keyExtractor={(item) => item.id}
-					/>
+			<View style={styles.container}>
+				<View style={styles.mainHeadCon}>
+					<Text style={styles.mainHead}>SMS Offers</Text>
+					<TouchableOpacity onPress={navigationHandler}>
+						<Text style={styles.seeAll}>See All</Text>
+					</TouchableOpacity>
 				</View>
-			</ScrollView>
+				<FlatList
+					style={styles.listWrap}
+					horizontal={true}
+					data={smsOffer}
+					renderItem={renderItem}
+					keyExtractor={(item) => item.id}
+				/>
+			</View>
 		);
 	}
-};
-export default SMSOFFerScreen;
+}
+
+export default SMSOffer;
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#fff',
-		alignItems: 'center',
-		justifyContent: 'flex-start'
+		height: 320,
+		paddingLeft: 0,
+		paddingTop: 0,
+		paddingBottom: 10,
+		width: deviceWidth
 	},
-	mainImg: {
+	mainHead: {
+		paddingLeft: 20,
+		fontFamily: 'RobotoCondensed_700Bold',
+		fontSize: 20,
+		textTransform: 'uppercase'
+	},
+	item: {
+		backgroundColor: '#fff',
+		padding: 10,
 		marginTop: 20,
-		marginBottom: 20,
-		width: deviceWidth / 1.1,
-		height: 250,
-		borderRadius: 20
+		marginLeft: 15,
+		borderRadius: 20,
+		width: 200,
+		height: 200,
+		shadowColor: '#000',
+		shadowRadius: 20,
+		shadowOffset: {
+			width: 1,
+			height: 3
+		},
+		elevation: 3
+	},
+	title: {
+		fontSize: 14
 	},
 	listWrap: {
-		paddingBottom: 30,
-		width: deviceWidth / 1.1
+		paddingBottom: 30
 	},
 	seeAll: {
 		fontFamily: 'RobotoCondensed_300Light_Italic',
@@ -130,22 +161,6 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		width: deviceWidth
 	},
-	item: {
-		backgroundColor: '#fff',
-		padding: 10,
-		marginTop: 20,
-		marginLeft: 5,
-		borderRadius: 20,
-		width: deviceWidth / 1.15,
-		height: 175,
-		shadowColor: '#000',
-		shadowRadius: 25,
-		shadowOffset: {
-			width: 2,
-			height: 3
-		},
-		elevation: 3
-	},
 	title: {
 		color: '#ee1d23',
 		fontFamily: 'RobotoCondensed_400Regular_Italic',
@@ -156,7 +171,7 @@ const styles = StyleSheet.create({
 		textDecorationStyle: 'solid'
 	},
 	type: {
-		marginTop: 10,
+		marginTop: 5,
 		fontFamily: 'RobotoCondensed_700Bold'
 	},
 	data: {
@@ -170,8 +185,7 @@ const styles = StyleSheet.create({
 		fontSize: 18
 	},
 	infoCon: {
-		flexDirection: 'row',
-		width: 200
+		flexDirection: 'row'
 	},
 	infoPriceCon: {
 		marginTop: 0,
@@ -180,7 +194,7 @@ const styles = StyleSheet.create({
 	infoText: {
 		alignSelf: 'center',
 		fontFamily: 'RobotoCondensed_400Regular',
-		marginLeft: 3,
+		marginLeft: 10,
 		marginTop: 2,
 		fontSize: 16
 	},
@@ -196,7 +210,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'column',
 		justifyContent: 'flex-end',
 		alignItems: 'flex-start',
-		marginTop: 3
+		marginTop: 10
 	},
 	subscribe: {
 		backgroundColor: 'rgba(238, 29, 35,0.9)',
@@ -207,12 +221,5 @@ const styles = StyleSheet.create({
 		fontFamily: 'RobotoCondensed_400Regular',
 		color: '#fff',
 		textTransform: 'uppercase'
-	},
-	headWrap: {
-		width: deviceWidth / 1.3
-	},
-	addInfo: {
-		flexDirection: 'row',
-		flexWrap: 'wrap'
 	}
 });

@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, ScrollView, View, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { StyleSheet, Text, ScrollView, FlatList, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { allNetworks } from '../utils/constants';
 import AppLoading from 'expo-app-loading';
 import * as Linking from 'expo-linking';
@@ -8,142 +8,91 @@ import * as Linking from 'expo-linking';
 import Ussd from 'react-native-ussd';
 import {
 	useFonts,
-	Montserrat_300Light,
-	Montserrat_400Regular,
-	Montserrat_500Medium,
-	Montserrat_600SemiBold,
-	Montserrat_700Bold
-} from '@expo-google-fonts/montserrat';
+	RobotoCondensed_300Light,
+	RobotoCondensed_300Light_Italic,
+	RobotoCondensed_400Regular,
+	RobotoCondensed_400Regular_Italic,
+	RobotoCondensed_700Bold,
+	RobotoCondensed_700Bold_Italic
+} from '@expo-google-fonts/roboto-condensed';
 const deviceWidth = Dimensions.get('window').width;
+const onPressHandler = (code) => {
+	let number = '';
+	if (Platform.OS === 'ios') {
+		number = `telprompt:${code}`;
+		Linking.openURL(number);
+	} else {
+		number = `tel:${encodeURIComponent(code)}`;
+		Linking.openURL(number);
+	}
+};
+const Item = ({ itemObj }) => (
+	<View style={styles.item}>
+		<View style={styles.headWrap}>
+			<Text style={styles.title}>{itemObj.name}</Text>
+		</View>
+		<View style={styles.addInfo}>
+			{itemObj.internet ? (
+				<View style={styles.infoCon}>
+					<Text style={styles.data}>Data</Text>
+					<Text style={styles.infoText}>{itemObj.internetAmount}</Text>
+				</View>
+			) : null}
+			{itemObj.minutes ? (
+				<View style={styles.infoCon}>
+					<Text style={styles.data}>Minutes</Text>
+					<Text style={styles.infoText}>{itemObj.minuteAmount} min</Text>
+				</View>
+			) : null}
+			{itemObj.otherNetworkMinFlag ? (
+				<View style={styles.infoCon}>
+					<Text style={styles.data}>Networks</Text>
+					<Text style={styles.infoText}>{itemObj.otherNetworkMin} min</Text>
+				</View>
+			) : null}
+			{itemObj.smsOpt ? (
+				<View style={styles.infoCon}>
+					<Text style={styles.data}>SMS</Text>
+					<Text style={styles.infoText}>{itemObj.smsAmount} sms</Text>
+				</View>
+			) : null}
+			<View style={styles.infoPriceCon}>
+				<Text style={styles.price}>Price</Text>
+				<Text style={styles.infoPriceText}>{itemObj.price}</Text>
+			</View>
+		</View>
+		<View style={styles.subscribeBtnWrap}>
+			<TouchableOpacity style={styles.subscribe} onPress={() => onPressHandler(itemObj.code)}>
+				<Text style={styles.subText}>Subscribe</Text>
+			</TouchableOpacity>
+		</View>
+	</View>
+);
 const LocationScreen = (props) => {
+	const renderItem = ({ item }) => <Item itemObj={item} />;
 	let [ fontsLoaded ] = useFonts({
-		Montserrat_300Light,
-		Montserrat_400Regular,
-		Montserrat_500Medium,
-		Montserrat_600SemiBold,
-		Montserrat_700Bold
+		RobotoCondensed_300Light,
+		RobotoCondensed_300Light_Italic,
+		RobotoCondensed_400Regular,
+		RobotoCondensed_400Regular_Italic,
+		RobotoCondensed_700Bold,
+		RobotoCondensed_700Bold_Italic
 	});
-	const specificNetwork = allNetworks.find((item) => item.name == props.route.params.name);
-
-	console.log('this is specific network', props.route.params.name);
-	const onPressHandler = (code) => {
-		let number = '';
-		if (Platform.OS === 'ios') {
-			number = `telprompt:${code}`;
-			Linking.openURL(number);
-		} else {
-			number = `tel:${encodeURIComponent(code)}`;
-			Linking.openURL(number);
-		}
-		console.log('this is code', code);
-	};
+	const specificNetwork = allNetworks.find((item) => item.name == 'Jazz');
 	if (!fontsLoaded) {
 		return <AppLoading />;
 	} else {
 		return (
 			<ScrollView>
 				<View style={styles.container}>
-					<Text style={styles.mainHead}>Location Based Packages</Text>
-					{specificNetwork &&
-						specificNetwork.location.map((item) => {
-							return (
-								<TouchableOpacity
-									onPress={() => onPressHandler(item.code)}
-									style={styles.cardPress}
-									key={item.id}
-								>
-									<View style={styles.cardCont}>
-										<Text style={styles.text}>{item.name}</Text>
-										<Text style={styles.textDial}>Dial {item.code}</Text>
-										<View style={styles.detailCon}>
-											<View style={styles.innerCon}>
-												<Image
-													style={styles.cardImg}
-													source={require('../../assets/images/coin.png')}
-												/>
-												<Text style={styles.headCard}>Price</Text>
-												<Text style={styles.paraCard}>{item.price}</Text>
-											</View>
-											{item.internet ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/wi.png')}
-													/>
-													<Text style={styles.headCard}>Internet</Text>
-													<Text style={styles.paraCard}>
-														{item.internetAmount}
-														{item.timeLimitFlag && item.netTimeLimit !== 'none' ? (
-															item.netTimeLimit
-														) : (
-															''
-														)}
-													</Text>
-												</View>
-											) : null}
-											{item.whatsapp ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/what.png')}
-													/>
-													<Text style={styles.headCard}>Whatsapp</Text>
-													<Text style={styles.paraCard}>{item.whatsappAmount}</Text>
-												</View>
-											) : null}
-											{item.offminutes ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/phone2.png')}
-													/>
-													<Text style={styles.headCard}>Off-net Mins</Text>
-													<Text style={styles.paraCard}>{item.offminuteAmount} Min</Text>
-												</View>
-											) : null}
-											{item.minutes ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/phone.png')}
-													/>
-													<Text style={styles.headCard}>{specificNetwork.name} Mins</Text>
-													<Text style={styles.paraCard}>{item.minuteAmount} Min</Text>
-												</View>
-											) : null}
-											{item.otherNetworkMin ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/phone.png')}
-													/>
-													<Text style={styles.headCard}>Other Mins</Text>
-													<Text style={styles.paraCard}>{item.otherNetworkMin} Min</Text>
-												</View>
-											) : null}
-											{item.smsOpt ? (
-												<View style={styles.innerCon}>
-													<Image
-														style={styles.cardImg}
-														source={require('../../assets/images/sms.png')}
-													/>
-													<Text style={styles.headCard}>SMS</Text>
-													<Text style={styles.paraCard}>{item.smsAmount}</Text>
-												</View>
-											) : null}
-											<View style={styles.innerCon}>
-												<Image
-													style={styles.cardImg}
-													source={require('../../assets/images/sch.png')}
-												/>
-												<Text style={styles.headCard}>Validity</Text>
-												<Text style={styles.paraCard}>{item.days} Days</Text>
-											</View>
-										</View>
-									</View>
-								</TouchableOpacity>
-							);
-						})}
+					<Image style={styles.mainImg} source={require('../../assets/images/jazz-sindh.png')} />
+					<FlatList
+						style={styles.listWrap}
+						horizontal={false}
+						data={specificNetwork.location}
+						renderItem={renderItem}
+						keyExtractor={(item) => item.id}
+					/>
 				</View>
 			</ScrollView>
 		);
@@ -157,65 +106,113 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'flex-start'
 	},
-	mainHead: {
-		fontSize: 25,
-		fontFamily: 'Montserrat_700Bold',
-		marginTop: 50,
-		marginBottom: 50
+	mainImg: {
+		marginTop: 20,
+		marginBottom: 20,
+		width: deviceWidth / 1.1,
+		height: 250,
+		borderRadius: 20
 	},
-	text: {
-		fontFamily: 'Montserrat_700Bold',
-		fontSize: 20,
-		marginTop: 10,
-		color: '#8dc63f',
-		marginBottom: 15,
-		textAlign: 'center'
+	listWrap: {
+		paddingBottom: 30,
+		width: deviceWidth / 1.1
 	},
-	textDial: {
-		fontFamily: 'Montserrat_600SemiBold',
-		fontSize: 20,
-		marginTop: 10,
-		color: '#ec2591',
-		marginBottom: 15,
-		marginTop: 5
+	seeAll: {
+		fontFamily: 'RobotoCondensed_300Light_Italic',
+		fontSize: 18,
+		marginRight: 15,
+		textDecorationLine: 'underline',
+		textDecorationStyle: 'solid',
+		textDecorationColor: '#000'
 	},
-	cardCont: {
-		flexDirection: 'column',
-		justifyContent: 'flex-start',
-		alignItems: 'center'
-	},
-	cardPress: {
-		borderColor: '#ec2591',
-		// backgroundColor: '#8dc63f',
-		borderRadius: 10,
-		borderWidth: 0.5,
-		width: deviceWidth / 1.2,
-		marginBottom: 20
-	},
-	detailCon: {
+	mainHeadCon: {
 		flexDirection: 'row',
-		justifyContent: 'center',
-		flexWrap: 'wrap'
+		justifyContent: 'space-between',
+		width: deviceWidth
 	},
-	innerCon: {
+	item: {
+		backgroundColor: '#fff',
+		padding: 10,
+		marginTop: 20,
+		marginLeft: 5,
+		borderRadius: 20,
+		width: deviceWidth / 1.15,
+		height: 220,
+		shadowColor: '#000',
+		shadowRadius: 25,
+		shadowOffset: {
+			width: 2,
+			height: 3
+		},
+		elevation: 3
+	},
+	title: {
+		color: '#ee1d23',
+		fontFamily: 'RobotoCondensed_400Regular_Italic',
+		fontSize: 16,
+		paddingTop: 10,
+		textTransform: 'uppercase',
+		textDecorationLine: 'underline',
+		textDecorationStyle: 'solid'
+	},
+	type: {
+		marginTop: 10,
+		fontFamily: 'RobotoCondensed_700Bold'
+	},
+	data: {
+		marginTop: 2,
+		fontFamily: 'RobotoCondensed_700Bold',
+		fontSize: 16
+	},
+	price: {
+		marginTop: 2,
+		fontFamily: 'RobotoCondensed_700Bold',
+		fontSize: 18
+	},
+	infoCon: {
+		flexDirection: 'row',
+		width: 200
+	},
+	infoPriceCon: {
+		marginTop: 0,
+		flexDirection: 'row'
+	},
+	infoText: {
+		alignSelf: 'center',
+		fontFamily: 'RobotoCondensed_400Regular',
+		marginLeft: 3,
+		marginTop: 2,
+		fontSize: 16
+	},
+	infoPriceText: {
+		alignSelf: 'center',
+		fontFamily: 'RobotoCondensed_400Regular',
+		marginLeft: 10,
+		marginTop: 2,
+		fontSize: 18
+	},
+	subscribeBtnWrap: {
+		flex: 1,
 		flexDirection: 'column',
-		justifyContent: 'center',
-		alignItems: 'center',
-		margin: 10
+		justifyContent: 'flex-end',
+		alignItems: 'flex-start',
+		marginTop: 3
 	},
-	cardImg: {
-		width: 40,
-		height: 40
+	subscribe: {
+		backgroundColor: 'rgba(238, 29, 35,0.9)',
+		padding: 10,
+		borderRadius: 5
 	},
-	headCard: {
-		fontFamily: 'Montserrat_600SemiBold',
-		color: '#ec2591',
-		marginTop: 10
+	subText: {
+		fontFamily: 'RobotoCondensed_400Regular',
+		color: '#fff',
+		textTransform: 'uppercase'
 	},
-	paraCard: {
-		fontFamily: 'Montserrat_700Bold',
-		color: '#8dc63f',
-		textAlign: 'center',
-		fontSize: 12
+	headWrap: {
+		width: deviceWidth / 1.3
+	},
+	addInfo: {
+		flexDirection: 'row',
+		flexWrap: 'wrap'
 	}
 });
